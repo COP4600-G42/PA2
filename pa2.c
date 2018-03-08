@@ -3,12 +3,12 @@
 
 int init_module(void)
 {
-    printk(KERN_INFO "Installing module.\n");
+    printk(KERN_INFO "Installing PA2 module.\n");
 
     return 0;
 }
 
 void cleanup_module(void)
 {
-    printk(KERN_INFO "Removing module.\n");
+    printk(KERN_INFO "Removing PA2 module.\n");
 }
