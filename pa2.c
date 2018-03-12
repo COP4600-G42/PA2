@@ -1,14 +1,135 @@
-#include <linux/module.h>
+#include <linux/device.h>
+#include <linux/fs.h>
+#include <linux/init.h>
 #include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/uaccess.h>
+
+#define CLASS_NAME  "pa2_class"
+#define DEVICE_NAME "pa2"
+
+MODULE_LICENSE("GPL");
+MODULE_AUTHOR("Derya Hancock <deryahancock@knights.ucf.edu>, Jerasimos Strakosha <jstrakosha@knights.ucf.edu>, Richard Zarth <rlziii@knights.ucf.edu>");
+MODULE_DESCRIPTION("A simple character-mode device driver");
+MODULE_VERSION("0.1");
+
+/* PROTOTYPES */
+int int_module(void);
+void cleanup_module(void);
+static int dev_open(struct inode *, struct file *);
+static ssize_t dev_read(struct file *, char *, size_t, loff_t *);
+static ssize_t dev_write(struct file *, const char *, size_t, loff_t *);
+static int dev_release(struct inode *, struct file *);
+
+/* GLOBAL VARIABLES */
+static int majorNumber;
+static int numberOfOpens = 0;
+static char message[1024] = {0};
+static short messageSize;
+static struct class *pa2Class = NULL;
+static struct device *pa2Device = NULL;
+
+static struct file_operations fops =
+{
+    .open    = dev_open,
+    .read    = dev_read,
+    .write   = dev_write,
+    .release = dev_release,
+};
 
 int init_module(void)
 {
-    printk(KERN_INFO "Installing PA2 module.\n");
+    printk(KERN_INFO "PA2: Initializing module.\n");
+
+    majorNumber = register_chrdev(0, DEVICE_NAME, &fops);
+
+    if (majorNumber < 0)
+    {
+        printk(KERN_ALERT "PA2: Failed to register a major number.\n");
+
+        return majorNumber;
+    }
+
+    printk(KERN_INFO "PA2: Registered with major number %d.\n", majorNumber);
+
+    pa2Class = class_create(THIS_MODULE, CLASS_NAME);
+
+    if (IS_ERR(pa2Class))
+    {
+        unregister_chrdev(majorNumber, DEVICE_NAME);
+        printk(KERN_ALERT "PA2: Failed to register class.\n");
+
+        return PTR_ERR(pa2CLass);
+    }
+
+    printk(KERN_INFO "PA2: Device class registered.\n");
+
+    pa2Device = device_create(pa2Class, NULL, MKDEV(majorNumber, 0), NULL, DEVICE_NAME);
+
+    if (IS_ERR(pa2Device))
+    {
+        class_destroy(pa2Class);
+        unregister_chrdev(majorNumber, DEVICE_NAME);
+        printk(KERN_ALERT "PA2: Failed to create device.\n");
+
+        return PTR_ERR(pa2Device);
+    }
+
+    printk(KERN_INFO "PA2: Device class created.\n");
 
     return 0;
 }
 
 void cleanup_module(void)
 {
-    printk(KERN_INFO "Removing PA2 module.\n");
+    device_destroy(pa2Class, MKDEV(majorNumber, 0));
+    class_unregister(pa2Class);
+    class_destroy(pa2Class);
+    unregister_chrdev(majorNumber, DEVICE_NAME);
+
+    printk(KERN_INFO "PA2: Removing module.\n");
+}
+
+static int dev_open(struct inode *inodep, struct file *filep)
+{
+    numberOfOpens++;
+
+    printk(KERN_INFO "PA2: Device has been opened %d time(s).\n", numberOfOpens);
+
+    return 0;
+}
+
+static ssize_t dev_read(struct file *filep, char *buffer, size_t len, loff_t *offset)
+{
+    int errorCount = 0;
+
+    errorCount = copy_to_user(buffer, message, messageSize);
+
+    if (errorCount == 0)
+    {
+        printk(KERN_INFO "PA2: Sent %d characters to the user.\n", messageSize);
+
+        // TODO: WTF?
+        return (messageSize = 0);
+    } else {
+        printk(KERN_INFO "PA2: Failed to send %d characters to the user.\n", errorCount);
+
+        return -EFAULT;
+}
+
+static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, loff_t *offset)
+{
+    sprintf(message, "%s(%zu letters)", buffer, len);
+    messageSize = strlen(message);
+
+    printk(KERN_INFO "PA2: Received %zu characters from the user.\n", len);
+
+    return len;
+}
+
+static int dev_release(struct inode *inodep, struct file *filep)
+{
+    printk(KERN_INFO "PA2: Device successfully closed.\n");
+
+    return 0;
 }
