@@ -59,7 +59,7 @@ int init_module(void)
         unregister_chrdev(majorNumber, DEVICE_NAME);
         printk(KERN_ALERT "PA2: Failed to register class.\n");
 
-        return PTR_ERR(pa2CLass);
+        return PTR_ERR(pa2Class);
     }
 
     printk(KERN_INFO "PA2: Device class registered.\n");
@@ -113,13 +113,14 @@ static ssize_t dev_read(struct file *filep, char *buffer, size_t len, loff_t *of
         return (messageSize = 0);
     } else {
         printk(KERN_INFO "PA2: Failed to send %d characters to the user.\n", errorCount);
+    }
 
         return -EFAULT;
 }
 
 static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, loff_t *offset)
 {
-    sprintf(message, "%s(%zu letters)", buffer, len);
+    sprintf(message, "%s (%zu characters)", buffer, len);
     messageSize = strlen(message);
 
     printk(KERN_INFO "PA2: Received %zu characters from the user.\n", len);
