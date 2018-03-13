@@ -3,6 +3,7 @@
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
+#include <linux/mutex.h>
 #include <linux/uaccess.h>
 
 #define CLASS_NAME  "pa2_class"
@@ -28,6 +29,7 @@ static char message[1024] = {0};
 static short messageSize;
 static struct class *pa2Class = NULL;
 static struct device *pa2Device = NULL;
+static DEFINE_MUTEX(pa2_mutex);
 
 static struct file_operations fops =
 {
@@ -75,6 +77,8 @@ int init_module(void)
         return PTR_ERR(pa2Device);
     }
 
+    mutex_init(&pa2_mutex);
+
     printk(KERN_INFO "PA2: Device class created.\n");
 
     return 0;
@@ -82,6 +86,8 @@ int init_module(void)
 
 void cleanup_module(void)
 {
+    mutex_destroy(&pa2_mutex);
+
     device_destroy(pa2Class, MKDEV(majorNumber, 0));
     class_unregister(pa2Class);
     class_destroy(pa2Class);
@@ -92,6 +98,13 @@ void cleanup_module(void)
 
 static int dev_open(struct inode *inodep, struct file *filep)
 {
+    if (!mutex_trylock(&pa2_mutex))
+    {
+        printk(KERN_ALERT "PA2: Device already in use by another process.\n");
+
+        return -EBUSY;
+    }
+
     numberOfOpens++;
 
     printk(KERN_INFO "PA2: Device has been opened %d time(s).\n", numberOfOpens);
@@ -130,6 +143,8 @@ static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, lof
 
 static int dev_release(struct inode *inodep, struct file *filep)
 {
+    mutex_unlock(&pa2_mutex);
+
     printk(KERN_INFO "PA2: Device successfully closed.\n");
 
     return 0;
