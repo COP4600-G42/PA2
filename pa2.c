@@ -6,15 +6,16 @@
 #include <linux/mutex.h>
 #include <linux/uaccess.h>
 
-#define CLASS_NAME  "pa2_class"
-#define DEVICE_NAME "pa2"
+#define CLASS_NAME    "pa2_class"
+#define DEVICE_NAME   "pa2"
+#define BUFFER_LENGTH 1024
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Derya Hancock <deryahancock@knights.ucf.edu>, Jerasimos Strakosha <jstrakosha@knights.ucf.edu>, Richard Zarth <rlziii@knights.ucf.edu>");
 MODULE_DESCRIPTION("A simple character-mode device driver");
 MODULE_VERSION("0.1");
 
-/* PROTOTYPES */
+/* FUNCTION PROTOTYPES */
 int int_module(void);
 void cleanup_module(void);
 static int dev_open(struct inode *, struct file *);
@@ -25,7 +26,8 @@ static int dev_release(struct inode *, struct file *);
 /* GLOBAL VARIABLES */
 static int majorNumber;
 static int numberOfOpens = 0;
-static char message[1024] = {0};
+static char message[BUFFER_LENGTH] = {0};
+static char receivedMessage[BUFFER_LENGTH] = {0};
 static short messageSize;
 static struct class *pa2Class = NULL;
 static struct device *pa2Device = NULL;
@@ -59,7 +61,7 @@ int init_module(void)
     if (IS_ERR(pa2Class))
     {
         unregister_chrdev(majorNumber, DEVICE_NAME);
-        printk(KERN_ALERT "PA2: Failed to register class.\n");
+        printk(KERN_ALERT "PA2: Failed to register a class.\n");
 
         return PTR_ERR(pa2Class);
     }
@@ -79,7 +81,7 @@ int init_module(void)
 
     mutex_init(&pa2_mutex);
 
-    printk(KERN_INFO "PA2: Device class created.\n");
+    printk(KERN_INFO "PA2: Device created successfully.\n");
 
     return 0;
 }
@@ -116,26 +118,30 @@ static ssize_t dev_read(struct file *filep, char *buffer, size_t len, loff_t *of
 {
     int errorCount = 0;
 
-    errorCount = copy_to_user(buffer, message, messageSize);
+    // TODO: Update this to also accept an offset?
+    errorCount = copy_to_user(buffer, message, len);
 
     if (errorCount == 0)
     {
         printk(KERN_INFO "PA2: Sent %d characters to the user.\n", messageSize);
 
-        // TODO: WTF?
-        return (messageSize = 0);
+        messageSize = 0;
+
+        return len;
     } else {
         printk(KERN_INFO "PA2: Failed to send %d characters to the user.\n", errorCount);
-    }
 
         return -EFAULT;
+    }
 }
 
 static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, loff_t *offset)
 {
-    sprintf(message, "%s (%zu characters)", buffer, len);
-    messageSize = strlen(message);
+    int errorCount = 0;
+    errorCount = copy_from_user(receivedMessage, buffer, len);
 
+    snprintf(message, BUFFER_LENGTH, "%s%s", message, receivedMessage);
+    messageSize = strlen(message);
     printk(KERN_INFO "PA2: Received %zu characters from the user.\n", len);
 
     return len;

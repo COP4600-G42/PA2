@@ -26,7 +26,7 @@ int main(void)
         return errno;
     }
 
-    printf("TEST PA2: Type in a short string to send to the kernel module:\n");
+    printf("TESTPA2: Type in a short string to send to the kernel module:\n");
     scanf("%[^\n]%*c", stringToSend);
 
     printf("TESTPA2: Writing message to the device [%s].\n", stringToSend);
@@ -45,7 +45,8 @@ int main(void)
 
     printf("TESTPA2: Reading from the device.\n");
 
-    ret = read(fd, receive, BUFFER_LENGTH);
+    // ret = read(fd, receive, BUFFER_LENGTH);
+    ret = read(fd, receive, 10);
 
     if (ret < 0)
     {
