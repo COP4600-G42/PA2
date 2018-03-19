@@ -7,19 +7,20 @@
 
 #define BUFFER_LENGTH 1024
 
-/* GLOBAL VARIABLES */
-static char receive[BUFFER_LENGTH];
-
 int main(void)
 {
-    int ret, fd;
-    char stringToSend[BUFFER_LENGTH];
+    int returnValue, device, stringLength;
+    char *receive, *stringToSend;
+    int c = 0;
+
+    receive      = malloc(sizeof(char) * BUFFER_LENGTH);
+    stringToSend = malloc(sizeof(char) * BUFFER_LENGTH);
 
     printf("TESTPA2: Starting device test code example.\n");
 
-    fd = open("/dev/pa2", O_RDWR);
+    device = open("/dev/pa2", O_RDWR);
 
-    if (fd < 0)
+    if (device < 0)
     {
         perror("TESTPA2: Failed to open the device.\n");
 
@@ -27,13 +28,20 @@ int main(void)
     }
 
     printf("TESTPA2: Type in a short string to send to the kernel module:\n");
-    scanf("%[^\n]%*c", stringToSend);
+
+    // scanf("%1024[^\n]%*c", stringToSend);
+    fgets(stringToSend, BUFFER_LENGTH, stdin);
+
+    strtok(stringToSend, "\n");
+
+    while ((c = getchar()) != '\n' && c != EOF);
 
     printf("TESTPA2: Writing message to the device [%s].\n", stringToSend);
 
-    ret = write(fd, stringToSend, strlen(stringToSend));
+    stringLength = strlen(stringToSend) >= BUFFER_LENGTH ? BUFFER_LENGTH : strlen(stringToSend);
+    returnValue = write(device, stringToSend, stringLength);
 
-    if (ret < 0)
+    if (returnValue < 0)
     {
         perror("TESTPA2: Failed to write the message to the device.\n");
 
@@ -45,10 +53,9 @@ int main(void)
 
     printf("TESTPA2: Reading from the device.\n");
 
-    // ret = read(fd, receive, BUFFER_LENGTH);
-    ret = read(fd, receive, 10);
+    returnValue = read(device, receive, BUFFER_LENGTH);
 
-    if (ret < 0)
+    if (returnValue < 0)
     {
         perror("TESTPA2: Failed to read the message from the device.\n");
 
@@ -57,6 +64,9 @@ int main(void)
 
     printf("TESTPA2: The received message is: [%s].\n", receive);
     printf("TESTPA2: End of the device test code example.\n");
+
+    free(receive);
+    free(stringToSend);
 
     return 0;
 }
