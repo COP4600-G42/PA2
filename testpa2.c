@@ -9,14 +9,14 @@
 
 int main(void)
 {
-    int returnValue, device, stringLength;
-    char *receive, *stringToSend;
-    int c = 0;
+    char inputChoice, c, receiveLength;
+    int device, stringLength, returnValue;
+    char *stringToSend, *stringToReceive, *stringToReceiveLength;
+    char *ptr;
 
-    receive      = malloc(sizeof(char) * BUFFER_LENGTH);
-    stringToSend = malloc(sizeof(char) * BUFFER_LENGTH);
-
-    printf("TESTPA2: Starting device test code example.\n");
+    stringToSend    = malloc(sizeof(char) * BUFFER_LENGTH);
+    stringToReceive = malloc(sizeof(char) * BUFFER_LENGTH);
+    stringToReceiveLength = malloc(sizeof(char) * BUFFER_LENGTH);
 
     device = open("/dev/pa2", O_RDWR);
 
@@ -27,46 +27,50 @@ int main(void)
         return errno;
     }
 
-    printf("TESTPA2: Type in a short string to send to the kernel module:\n");
+    printf("TESTPA2: Type W to write.\n");
+    printf("TESTPA2: Type R to read.\n");
+    printf("TESTPA2: Type Q to quit.\n");
 
-    // scanf("%1024[^\n]%*c", stringToSend);
-    fgets(stringToSend, BUFFER_LENGTH, stdin);
+    do {
+        printf("TESTPA2: What do you want to do? ");
+        inputChoice = getchar();
 
-    strtok(stringToSend, "\n");
+        // Clear the stdin buffer
+        while ((c = getchar()) != '\n' && c != EOF);
 
-    while ((c = getchar()) != '\n' && c != EOF);
+        switch (inputChoice)
+        {
+            case 'w':
+            case 'W':
+                printf("TESTPA2: Enter a string to write:\n");
+                printf("TESTPA2: ");
+                fgets(stringToSend, BUFFER_LENGTH, stdin);
+                strtok(stringToSend, "\n");
+                stringLength = strlen(stringToSend) >= BUFFER_LENGTH ? BUFFER_LENGTH : strlen(stringToSend);
+                returnValue = write(device, stringToSend, stringLength);
+                break;
+            case 'r':
+            case 'R':
+                printf("TESTPA2: How many bytes would you like to read?\n");
+                printf("TESTPA2: ");
+                fgets(stringToReceiveLength, 4, stdin);
+                receiveLength = atoi(stringToReceiveLength);
+                returnValue = read(device, stringToReceive, receiveLength);
+                printf("TESTPA2: %s\n", stringToReceive);
+                break;
+            case 'q':
+            case 'Q':
+                printf("TESTPA2: Bye-bye.\n");
+                break;
+            default:
+                printf("TESTPA2: Invalid input option.\n");
+                break;
+        }
+    } while (inputChoice != 'Q' && inputChoice != 'q');
 
-    printf("TESTPA2: Writing message to the device [%s].\n", stringToSend);
-
-    stringLength = strlen(stringToSend) >= BUFFER_LENGTH ? BUFFER_LENGTH : strlen(stringToSend);
-    returnValue = write(device, stringToSend, stringLength);
-
-    if (returnValue < 0)
-    {
-        perror("TESTPA2: Failed to write the message to the device.\n");
-
-        return errno;
-    }
-
-    printf("TESTPA2: Press ENTER to read back from the device.\n");
-    getchar();
-
-    printf("TESTPA2: Reading from the device.\n");
-
-    returnValue = read(device, receive, BUFFER_LENGTH);
-
-    if (returnValue < 0)
-    {
-        perror("TESTPA2: Failed to read the message from the device.\n");
-
-        return errno;
-    }
-
-    printf("TESTPA2: The received message is: [%s].\n", receive);
-    printf("TESTPA2: End of the device test code example.\n");
-
-    free(receive);
     free(stringToSend);
+    free(stringToReceive);
+    free(stringToReceiveLength);
 
     return 0;
 }
