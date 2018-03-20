@@ -119,10 +119,11 @@ static ssize_t dev_read(struct file *filep, char *buffer, size_t len, loff_t *of
     int errorCount = 0;
 
     // TODO: Update this to also accept an offset?
+    len = strlen(message) < len ? strlen(message) : len;
     errorCount = copy_to_user(buffer, message, len);
 
-    len = strlen(message) < len ? strlen(message) : len;
-    snprintf(message, BUFFER_LENGTH, "%s", &message[len]);
+    snprintf(message, len, "%s", &message[len]);
+    message[len] = '\0';
 
     printk(KERN_INFO "PA2: Fully string: %s\n", message);
 

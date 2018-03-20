@@ -57,6 +57,7 @@ int main(void)
                 receiveLength = atoi(stringToReceiveLength);
                 returnValue = read(device, stringToReceive, receiveLength);
                 printf("TESTPA2: %s\n", stringToReceive);
+                strcpy(stringToReceive, "");
                 break;
             case 'q':
             case 'Q':
