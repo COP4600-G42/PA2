@@ -121,11 +121,14 @@ static ssize_t dev_read(struct file *filep, char *buffer, size_t len, loff_t *of
     // TODO: Update this to also accept an offset?
     errorCount = copy_to_user(buffer, message, len);
 
+    len = strlen(message) < len ? strlen(message) : len;
+    snprintf(message, BUFFER_LENGTH, "%s", &message[len]);
+
+    printk(KERN_INFO "PA2: Fully string: %s\n", message);
+
     if (errorCount == 0)
     {
-        printk(KERN_INFO "PA2: Sent %d characters to the user.\n", messageSize);
-
-        messageSize = 0;
+        printk(KERN_INFO "PA2: Sent %d characters to the user.\n", len);
 
         return len;
     } else {
