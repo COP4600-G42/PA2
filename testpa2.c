@@ -14,8 +14,8 @@ int main(void)
     char *stringToSend, *stringToReceive, *stringToReceiveLength;
     char *ptr;
 
-    stringToSend    = malloc(sizeof(char) * BUFFER_LENGTH);
-    stringToReceive = malloc(sizeof(char) * BUFFER_LENGTH);
+    stringToSend          = malloc(sizeof(char) * BUFFER_LENGTH);
+    stringToReceive       = malloc(sizeof(char) * BUFFER_LENGTH);
     stringToReceiveLength = malloc(sizeof(char) * BUFFER_LENGTH);
 
     device = open("/dev/pa2", O_RDWR);
