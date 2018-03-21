@@ -100,7 +100,7 @@ void cleanup_module(void)
 
 static int dev_open(struct inode *inodep, struct file *filep)
 {
-    printk(KERN_INFO "PA2: OPEN Full string: %s\n", message);
+    printk(KERN_INFO "\nPA2: OPEN Full string: %s\n", message);
 
     if (!mutex_trylock(&pa2_mutex))
     {
@@ -113,8 +113,6 @@ static int dev_open(struct inode *inodep, struct file *filep)
 
     printk(KERN_INFO "PA2: Device has been opened %d time(s).\n", numberOfOpens);
 
-    printk(KERN_INFO "PA2: OPEN Full string: %s\n", message);
-
     return 0;
 }
 
@@ -122,7 +120,7 @@ static ssize_t dev_read(struct file *filep, char *buffer, size_t len, loff_t *of
 {
     int errorCount = 0;
 
-    printk(KERN_INFO "PA2: READ Full string: %s\n", message);
+    printk(KERN_INFO "\nPA2: READ Full string: %s\n", message);
 
     // TODO: Update this to also accept an offset?
 
@@ -154,7 +152,7 @@ static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, lof
 {
     int errorCount = 0;
 
-    printk(KERN_INFO "PA2: WRITE Full string: %s\n", message);
+    printk(KERN_INFO "\nPA2: WRITE Full string: %s\n", message);
 
     // If the requested write length is more than the available space
     // then reduce the write length to the maximum available
@@ -176,7 +174,7 @@ static int dev_release(struct inode *inodep, struct file *filep)
 {
     mutex_unlock(&pa2_mutex);
 
-    printk(KERN_INFO "PA2: RELEASE Full string: %s\n", message);
+    printk(KERN_INFO "\nPA2: RELEASE Full string: %s\n", message);
 
     printk(KERN_INFO "PA2: Device successfully closed.\n");
 

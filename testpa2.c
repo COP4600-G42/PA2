@@ -11,12 +11,11 @@ int main(void)
 {
     char inputChoice, c, receiveLength;
     int device, stringLength, returnValue;
-    char *stringToSend, *stringToReceive, *stringToReceiveLength;
+    char *stringToSend, *messageLength, *message;
     char *ptr;
 
-    stringToSend          = malloc(sizeof(char) * BUFFER_LENGTH);
-    stringToReceive       = malloc(sizeof(char) * BUFFER_LENGTH);
-    stringToReceiveLength = malloc(sizeof(char) * BUFFER_LENGTH);
+    stringToSend  = malloc(sizeof(char) * BUFFER_LENGTH);
+    messageLength = malloc(sizeof(char) * BUFFER_LENGTH);
 
     device = open("/dev/pa2", O_RDWR);
 
@@ -51,13 +50,20 @@ int main(void)
                 break;
             case 'r':
             case 'R':
+                message = calloc(BUFFER_LENGTH, sizeof(char));
+
                 printf("TESTPA2: How many bytes would you like to read?\n");
+                printf("TESTPA2: %s\n", message);
                 printf("TESTPA2: ");
-                fgets(stringToReceiveLength, 4, stdin);
-                receiveLength = atoi(stringToReceiveLength);
-                returnValue = read(device, stringToReceive, receiveLength);
-                printf("TESTPA2: %s\n", stringToReceive);
-                strcpy(stringToReceive, "");
+
+                fgets(messageLength, BUFFER_LENGTH, stdin);
+                receiveLength = atoi(messageLength);
+
+                returnValue = read(device, message, receiveLength);
+
+                printf("TESTPA2: %s\n", message);
+
+                free(message);
                 break;
             case 'q':
             case 'Q':
@@ -70,8 +76,12 @@ int main(void)
     } while (inputChoice != 'Q' && inputChoice != 'q');
 
     free(stringToSend);
-    free(stringToReceive);
-    free(stringToReceiveLength);
+    free(messageLength);
+
+    if (message != NULL)
+    {
+        free(message);
+    }
 
     return 0;
 }
