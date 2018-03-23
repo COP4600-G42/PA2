@@ -120,7 +120,7 @@ static ssize_t dev_read(struct file *filep, char *buffer, size_t len, loff_t *of
 {
     int errorCount = 0;
     int i= 0;
-    int stringLen=len;
+    int stringLen=BUFFER_LENGTH -len;
     //int off = *offset;
 
     printk(KERN_INFO "\nPA2: READ Full string: %s\n", message);
