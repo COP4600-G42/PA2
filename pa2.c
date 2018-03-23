@@ -119,6 +119,9 @@ static int dev_open(struct inode *inodep, struct file *filep)
 static ssize_t dev_read(struct file *filep, char *buffer, size_t len, loff_t *offset)
 {
     int errorCount = 0;
+    int i=0;
+    int stringLen=len;
+    int off = *offset;
 
     printk(KERN_INFO "\nPA2: READ Full string: %s\n", message);
 
@@ -127,10 +130,18 @@ static ssize_t dev_read(struct file *filep, char *buffer, size_t len, loff_t *of
     // If the requested read length is more than the available space
     // then reduce the read length to the maximum available
     // else use the requested read length
-    len = strlen(message) < len ? strlen(message) : len;
+    //NOT SURE ABOUT THIS LINE
+    stringLen = BUFFER_LENGTH < len ? BUFFER_LENGTH : len;
+    //len = strlen(message) < len ? strlen(message) : len;
     errorCount = copy_to_user(buffer, message, len);
+     while (stringLen>0)
+     {
+        buffer[i]= message[i+off];
+        stringLen--;
 
-    strcpy(message, &message[len]);
+     }
+
+    //strcpy(message, &message[len]);
     // snprintf(message, len, "%s", &message[len]);
     // message[len] = '\0';
 
