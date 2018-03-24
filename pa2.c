@@ -122,34 +122,29 @@ static ssize_t dev_read(struct file *filep, char *buffer, size_t len, loff_t *of
     int errorCount = 0;
     int i= 0;
     int stringLen= messageLen;
-    //int off = *offset;
 
     printk(KERN_INFO "\nPA2: READ Full string: %s\n", message);
 
-    // TODO: Update this to also accept an offset?easy to do; just add offset inside the 
-    //while looplike  message[i+offset]= message [i+len+offset];
     // If the requested read length is more than the available space
-    // then reduce the read length to the maximum available
-    // else use the requested read length
-    
-    //len = strlen(message) < len ? strlen(message) : len;old code with string function
+    // Then reduce the read length to the maximum available
+    // Else use the requested read length
+
     if (len>messageLen)
+    {
         len= messageLen;
+    }
 
     errorCount = copy_to_user(buffer, message, len);
-    
-     while (stringLen>0)
-     {
-        message[i]= message[i+len];
-        i=i+1;
-        stringLen--;
 
+     while (stringLen > 0)
+     {
+        message[i] = message[i + len];
+        i = i + 1;
+        stringLen--;
      }
 
-    //Reduce the message lenght each time we read  
-    messageLen= messageLen-len;
-    //strcpy(message, &message[len]); old code with string functions
-    // snprintf(message, len, "%s", &message[len]);
+    //Reduce the message lenght each time we read
+    messageLen -= len;
 
     if (errorCount == 0)
     {
@@ -168,45 +163,39 @@ static ssize_t dev_read(struct file *filep, char *buffer, size_t len, loff_t *of
 static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, loff_t *offset)
 {
     int errorCount = 0;
-    int j=0;
+    int j = 0;
     int startLen = messageLen;
 
 
     printk(KERN_INFO "\nPA2: WRITE Full string: %s\n", message);
 
     // If the requested write length is more than the available space
-    // then reduce the write length to the maximum available
-    // else use the requested write length
-    if  ( (len+ messageLen) > BUFFER_LENGTH) 
+    // Then reduce the write length to the maximum available
+    // Else use the requested write length
+    if  ((len+ messageLen) > BUFFER_LENGTH)
     {
         len= BUFFER_LENGTH- messageLen;
         messageLen=BUFFER_LENGTH;
-    }  
-    else
-    {
+    } else {
         messageLen= messageLen + len;
-    }  
+    }
 
-     //len = (BUFFER_LENGTH - strlen(message)) < len ? (BUFFER_LENGTH - strlen(message)) : len;
-    //startLen keeps the point where new write is starting in  message
-    
     errorCount = copy_from_user(receivedMessage, buffer, len);
 
-   // snprintf(message, (strlen(message) + len + 1), "%s%s", message, receivedMessage);
    printk(KERN_INFO"PA2: before the loop j=%d, startLen=%d, len=%d, messageLen=%d",j,startLen,len,messageLen);
+
    for (j=0; j<len ;j++)
     {
-        //before writing check again if where we are writing is not bigger than the buffer
-        if (startLen>BUFFER_LENGTH)
-            break;  
-        else
-            message[startLen++]=receivedMessage[j];
+        // Before writing check again if where we are writing is not bigger than the buffer
+        if (startLen > BUFFER_LENGTH)
+        {
+            break;
+        } else {
+            message[startLen] = receivedMessage[j];
+            startLen++;
+        }
     }
-   
-    //printk(KERN_INFO"PA2: after the loop j = %d, startLen= %d, len=%d,messageLen=%d ",j,startLen,len,messageLen);
-    //messageLen keeps up with the lenght of the message 
 
-    // messageSize = strlen(message); code with str function
     printk(KERN_INFO "PA2: Received %zu characters from the user.\n", len);
 
     printk(KERN_INFO "PA2: WRITE Full string: %s\n", message);
